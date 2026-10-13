@@ -28,7 +28,7 @@ jobs:
 
       - name: Installa dipendenze
         if: steps.gate.outputs.run == 'true'
-        run: pip install fast-flights==3.1.0
+        run: pip install fast-flights==3.1.0 typing_extensions
 
       - name: Cerca voli
         if: steps.gate.outputs.run == 'true'
