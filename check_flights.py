@@ -142,4 +142,12 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception:  # noqa: BLE001  -> l'errore finisce nell'issue "Ricerca fallita"
+        import traceback
+        Path("report.md").write_text("Errore nello script:\n\n```\n" + traceback.format_exc() + "```")
+        if os.getenv("GITHUB_OUTPUT"):
+            with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
+                fh.write("alert=false\nfailed=true\nprice=\n")
+        print(traceback.format_exc())
