@@ -13,7 +13,9 @@ import time
 from datetime import date, datetime
 from pathlib import Path
 
-from fast_flights import FlightQuery, Passengers, create_query, get_flights
+from fast_flights import FlightQuery, Passengers, create_query, fetch_flights_html
+from fast_flights.parser import parse_js
+from selectolax.lexbor import LexborHTMLParser
 
 ORIGINS = ["MXP"]
 DESTINATIONS = ["NRT", "HND"]
@@ -47,6 +49,27 @@ def leg_info(f):
         "stops": len(segs) - 1,
         "via": [s.to_airport.code for s in segs[:-1]],
     }
+
+
+def get_flights(q):
+    """Come fast_flights.get_flights, ma salta i singoli voli senza prezzo o
+    illeggibili invece di far fallire l'intera ricerca."""
+    script = LexborHTMLParser(fetch_flights_html(q)).css_first(r"script.ds\:1")
+    if script is None:
+        raise RuntimeError("pagina Google Flights senza dati (blocco o formato cambiato)")
+    data = script.text().split("data:", 1)[1].rsplit(",", 1)[0]
+    if data.endswith("errorHasStatus: true"):
+        return []
+    payload = json.loads(data)
+    items = (payload[3][0] if len(payload) > 3 and payload[3] else None) or []
+    out = []
+    for k in items:
+        payload[3][0] = [k]
+        try:
+            out.extend(parse_js("data:" + json.dumps(payload) + ",x"))
+        except Exception:  # noqa: BLE001 - volo senza prezzo o struttura diversa
+            continue
+    return out
 
 
 def query(legs, trip):
