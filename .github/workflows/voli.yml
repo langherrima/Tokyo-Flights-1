@@ -1,0 +1,63 @@
+name: Alert voli Milano-Tokyo
+
+on:
+  schedule:
+    - cron: "47 5 * * *"   # ogni giorno alle 05:47 UTC (07:47 in Italia)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Stop dopo il 19 dicembre
+        id: gate
+        run: |
+          if [ "$(date -u +%Y%m%d)" -gt 20261219 ]; then echo "run=false" >> "$GITHUB_OUTPUT"; else echo "run=true" >> "$GITHUB_OUTPUT"; fi
+
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.run == 'true'
+
+      - uses: actions/setup-python@v5
+        if: steps.gate.outputs.run == 'true'
+        with:
+          python-version: "3.12"
+
+      - name: Installa dipendenze
+        if: steps.gate.outputs.run == 'true'
+        run: pip install fast-flights==3.1.0
+
+      - name: Cerca voli
+        if: steps.gate.outputs.run == 'true'
+        id: search
+        env:
+          PRICE_THRESHOLD: ${{ vars.PRICE_THRESHOLD }}
+        run: |
+          python check_flights.py
+          cat report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Salva storico prezzi
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add history.json
+          git commit -m "Storico prezzi $(date -u +%F)" || echo "Nessuna modifica"
+          git push
+
+      - name: Apri issue se il prezzo scende
+        if: steps.gate.outputs.run == 'true' && steps.search.outputs.alert == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create --title "✈️ Milano-Tokyo: ${{ steps.search.outputs.price }} EUR ($(date -u +%F))" --body-file report.md
+
+      - name: Apri issue se la ricerca fallisce
+        if: steps.gate.outputs.run == 'true' && steps.search.outputs.failed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create --title "⚠️ Ricerca voli fallita ($(date -u +%F))" --body-file report.md
