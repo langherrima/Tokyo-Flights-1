@@ -71,7 +71,9 @@ def search():
                                 "return": ret.isoformat(), "price": best.price,
                                 "out": leg_info(best), "url": q.url()})
         except Exception as e:  # noqa: BLE001
-            errors.append(f"{o}-{d} {dep}/{ret}: {type(e).__name__}: {e}"[:200])
+            import traceback
+            fr = traceback.extract_tb(e.__traceback__)[-1]
+            errors.append(f"{o}-{d} {dep}/{ret}: {type(e).__name__}: {e} @ {Path(fr.filename).name}:{fr.lineno} {fr.line}"[:300])
         pause()
     return results, errors
 
