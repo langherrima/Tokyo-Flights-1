@@ -53,6 +53,33 @@
       },
       "found": 7,
       "errors": 33
+    },
+    {
+      "date": "2026-10-13",
+      "best": {
+        "origin": "MXP",
+        "dest": "HND",
+        "depart": "2026-12-24",
+        "return": "2027-01-11",
+        "price": 1179,
+        "out": {
+          "airlines": [
+            "Air France"
+          ],
+          "dep": "24/12 15:55",
+          "arr": "25/12 19:55",
+          "duration": "20h00",
+          "minutes": 1200,
+          "stops": 1,
+          "via": [
+            "CDG"
+          ]
+        },
+        "url": "https://www.google.com/travel/flights/search?tfs=GhoSCjIwMjYtMTItMjRqBRIDTVhQcgUSA0hORBoaEgoyMDI3LTAxLTExagUSA0hORHIFEgNNWFBCAQFIAZgBAQ==&hl=it&curr=EUR",
+        "ret": null
+      },
+      "found": 7,
+      "errors": 33
     }
   ]
 }
